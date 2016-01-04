@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.util.Log;
 import android.R;
 /**
@@ -22,13 +23,14 @@ public class BatteryReceiver extends BroadcastReceiver {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         String message =null;
         String action = intent.getAction();
+        
         switch (action) {
             case "android.intent.action.BATTERY_LOW":
                 Log.i("BatteryReceiver", "BatteryLow");
                 if (wifiManager.isWifiEnabled()) {
                     wifiManager.setWifiEnabled(false);
 
-                    message = "Wifi turned off";
+                    message = "BatteryLow - Wifi turned off";
                     Intent i = new Intent(context, MainActivity.class);
                     // use System.currentTimeMillis() to have a unique ID for the pending intent
                     PendingIntent pIntent = PendingIntent.getActivity(context, (int) System.currentTimeMillis(), i, 0);
@@ -52,12 +54,13 @@ public class BatteryReceiver extends BroadcastReceiver {
                 break;
             case "android.intent.action.BATTERY_OKAY":
                 Log.i("BatteryReceiver", "BatteryOK");
-                break;
+            case "android.intent.action.ACTION_DOCK_EVENT":
+                Log.i("BatteryReceiver", "Dock connected");
             case "android.intent.action.ACTION_POWER_CONNECTED":
                 Log.i("BatteryReceiver", "Power Connected");
                 if (!wifiManager.isWifiEnabled()) {
                     wifiManager.setWifiEnabled(true);
-                    message = "Wifi turned on";
+                    message = "Power Connected - Wifi turned on";
                     Intent i = new Intent(context, MainActivity.class);
                     // use System.currentTimeMillis() to have a unique ID for the pending intent
                     PendingIntent pIntent = PendingIntent.getActivity(context, (int) System.currentTimeMillis(), i, 0);
