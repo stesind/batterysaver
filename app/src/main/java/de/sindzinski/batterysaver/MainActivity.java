@@ -1,14 +1,20 @@
 package de.sindzinski.batterysaver;
 
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -19,7 +25,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,15 +43,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        SharedPreferences sharedPrefs;
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         // Register for the battery changed event
         IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-
         // Intent is sticky so using null as receiver works fine
         // return value contains the status
         Intent batteryStatus = this.registerReceiver(null, filter);
-
         // Are we charging / charged?
         int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+
         boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING
                 || status == BatteryManager.BATTERY_STATUS_FULL;
 
@@ -56,12 +64,12 @@ public class MainActivity extends AppCompatActivity {
         boolean usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB;
         boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
 
-        TextView textView = (TextView) findViewById(R.id.textView);
-        textView.setText("Current status:" +
-                "\nisCharging: " + isCharging
-                        + " \nisFull: " + isFull
-                        + " \nusbCharge: " + usbCharge
-                        + " \nacCharge: " + acCharge);
+        FragmentManager fragmentManager = getFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.container, BatteryFragment.newInstance(isCharging, isFull, usbCharge, acCharge));
+        fragmentTransaction.addToBackStack(null);
+        fragmentTransaction.commit();
+
     }
 
     @Override
@@ -80,6 +88,11 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.replace(R.id.container, new SettingsFragment());
+            transaction.addToBackStack("settings");
+            transaction.commit();
+            transaction.addToBackStack("settings");
             return true;
         }
 
@@ -126,4 +139,5 @@ public class MainActivity extends AppCompatActivity {
 
         notificationManager.notify(0, n);
     }
+
 }

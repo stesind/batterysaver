@@ -24,6 +24,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.sindzinski.batterysaver.SettingsActivity" />
+        </activity>
        <receiver android:name=".BatteryReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BATTERY_LOW" />

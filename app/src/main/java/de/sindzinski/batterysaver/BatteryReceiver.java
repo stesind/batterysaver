@@ -27,8 +27,28 @@ public class BatteryReceiver extends BroadcastReceiver {
                 Log.i("BatteryReceiver", "BatteryLow");
                 if (wifiManager.isWifiEnabled()) {
                     wifiManager.setWifiEnabled(false);
+
+                    message = "Wifi turned off";
+                    Intent i = new Intent(context, MainActivity.class);
+                    // use System.currentTimeMillis() to have a unique ID for the pending intent
+                    PendingIntent pIntent = PendingIntent.getActivity(context, (int) System.currentTimeMillis(), i, 0);
+
+                    // build notification
+                    // the addAction re-use the same intent to keep the example short
+                    Notification n  = new Notification.Builder(context)
+                            .setContentTitle("Battery Saver")
+                            .setContentText(message)
+                            .setSmallIcon(R.drawable.ic_lock_idle_charging)
+                            .setContentIntent(pIntent)
+                            .setAutoCancel(true)
+                            .build();
+
+                    NotificationManager notificationManager =
+                            (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+
+                    notificationManager.notify(0, n);
                 }
-                message = "Wifi turned off";
+
                 break;
             case "android.intent.action.BATTERY_OKAY":
                 Log.i("BatteryReceiver", "BatteryOK");
@@ -37,27 +57,28 @@ public class BatteryReceiver extends BroadcastReceiver {
                 Log.i("BatteryReceiver", "Power Connected");
                 if (!wifiManager.isWifiEnabled()) {
                     wifiManager.setWifiEnabled(true);
+                    message = "Wifi turned on";
+                    Intent i = new Intent(context, MainActivity.class);
+                    // use System.currentTimeMillis() to have a unique ID for the pending intent
+                    PendingIntent pIntent = PendingIntent.getActivity(context, (int) System.currentTimeMillis(), i, 0);
+
+                    // build notification
+                    // the addAction re-use the same intent to keep the example short
+                    Notification n  = new Notification.Builder(context)
+                            .setContentTitle("Battery Saver")
+                            .setContentText(message)
+                            .setSmallIcon(R.drawable.ic_lock_idle_charging)
+                            .setContentIntent(pIntent)
+                            .setAutoCancel(true)
+                            .build();
+
+                    NotificationManager notificationManager =
+                            (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+
+                    notificationManager.notify(0, n);
                 }
-                message = "Wifi turned off";
                 break;
         }
-        Intent i = new Intent(context, MainActivity.class);
-        // use System.currentTimeMillis() to have a unique ID for the pending intent
-        PendingIntent pIntent = PendingIntent.getActivity(context, (int) System.currentTimeMillis(), i, 0);
 
-        // build notification
-        // the addAction re-use the same intent to keep the example short
-        Notification n  = new Notification.Builder(context)
-                .setContentTitle("Battery Saver")
-                .setContentText(message)
-                .setSmallIcon(R.drawable.ic_lock_idle_charging)
-                .setContentIntent(pIntent)
-                .setAutoCancel(true)
-                .build();
-
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-
-        notificationManager.notify(0, n);
     }
 }
