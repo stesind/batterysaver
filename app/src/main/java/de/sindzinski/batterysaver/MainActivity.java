@@ -5,10 +5,12 @@ import android.app.FragmentTransaction;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
@@ -23,7 +25,9 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 public class MainActivity extends AppCompatActivity  {
 
@@ -64,12 +68,64 @@ public class MainActivity extends AppCompatActivity  {
         boolean usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB;
         boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
 
-        FragmentManager fragmentManager = getFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.container, BatteryFragment.newInstance(isCharging, isFull, usbCharge, acCharge));
-        fragmentTransaction.addToBackStack(null);
-        fragmentTransaction.commit();
+        TextView textView = (TextView) findViewById(R.id.textView);
+        textView.setText("Current status:" +
+                "\nisCharging: " + isCharging
+                + " \nisFull: " + isFull
+                + " \nusbCharge: " + usbCharge
+                + " \nacCharge: " + acCharge);
 
+        ToggleButton toggleButton = (ToggleButton) findViewById(R.id.toggleButton);
+
+        //set the toogle button to the actual registration state of broadcast receiver
+        toggleButton.setChecked(checkReceiver());
+        //toggleButton.setChecked(false);
+
+        toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    // The toggle is enabled
+                    registerReceiver();
+                } else {
+                    // The toggle is disabled
+                    unRegisterReceiver();
+                }
+            }
+        });
+    }
+
+    public boolean checkReceiver() {
+        ComponentName receiver = new ComponentName(this, BatteryReceiver.class);
+        PackageManager pm = getPackageManager();
+        int componentEnabledSetting = pm.getComponentEnabledSetting(receiver);
+        if (componentEnabledSetting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void registerReceiver() {
+        ComponentName receiver = new ComponentName(this, BatteryReceiver.class);
+        PackageManager pm = getPackageManager();
+
+        pm.setComponentEnabledSetting(receiver,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                //COMPONENT_ENABLED_STATE_DEFAULT	Sets the state to the manifest file value
+                PackageManager.DONT_KILL_APP);
+        String message = "BatteryReceiver registered";
+        setMessage(message);
+    }
+
+    public void unRegisterReceiver() {
+        ComponentName receiver = new ComponentName(this, BatteryReceiver.class);
+        PackageManager pm = getPackageManager();
+
+        pm.setComponentEnabledSetting(receiver,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+        String message = "BatteryReceiver unregistered";
+        setMessage(message);
     }
 
     @Override

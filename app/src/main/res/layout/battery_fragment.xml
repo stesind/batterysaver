@@ -36,4 +36,13 @@
         android:layout_below="@+id/textView"
         android:layout_toEndOf="@+id/wifiOn">
     </Button>
+
+    <ToggleButton
+        android:label="Auto Wifi Turn On/Off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Auto Wifi Turn On/Off"
+        android:id="@+id/toggleButton"
+        android:layout_below="@+id/wifiOn"
+        android:layout_alignParentStart="true" />
 </RelativeLayout>
