@@ -237,6 +237,8 @@ public class MainActivity extends AppCompatActivity  {
         buttonUpdateService.setEnabled(checkBatterySaverService());
 
         Log.i(TAG, "Started BatteryServerService");
+        String message = "BatterySaverService started";
+        setMessage(message);
     }
 
     public void updateBatterySaverService() {
@@ -267,6 +269,8 @@ public class MainActivity extends AppCompatActivity  {
                 calendar.getTimeInMillis(), REPEAT_TIME, pendingIntent);
 
         Log.i(TAG, "Updated BatteryServerService");
+        String message = "BatterySaverService updated";
+        setMessage(message);
     }
 
     public boolean checkBatterySaverService() {
@@ -285,6 +289,8 @@ public class MainActivity extends AppCompatActivity  {
         if (alarmUp)
         {
             Log.d("myTag", "Alarm is already active");
+            String message = "BatterySaverService already up";
+            setMessage(message);
             return true;
         } else {
             return false;
@@ -317,6 +323,9 @@ public class MainActivity extends AppCompatActivity  {
         //set the update button
         Button buttonUpdateService = (Button) findViewById(R.id.buttonUpdateService);
         buttonUpdateService.setEnabled(checkBatterySaverService());
+
+        String message = "BatterySaverService Off";
+        setMessage(message);
     }
 
     public void turnWifiOn() {
