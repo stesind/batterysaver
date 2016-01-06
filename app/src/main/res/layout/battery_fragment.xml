@@ -47,8 +47,8 @@
         android:layout_height="wrap_content"
         android:text="New Text"
         android:id="@+id/textViewCriticalBatteryLevel"
-        android:layout_alignBottom="@+id/seekBar"
-        android:layout_alignParentStart="true" />
+        android:layout_above="@+id/textView"
+        android:layout_toEndOf="@+id/seekBar" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -57,5 +57,16 @@
         android:id="@+id/textView"
         android:layout_below="@+id/seekBar"
         android:layout_alignParentStart="true" />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Update Service"
+        android:id="@+id/buttonUpdateService"
+        android:layout_toEndOf="@+id/switchService"
+        android:layout_marginStart="32dp"
+        android:layout_alignBottom="@+id/switchService"
+        android:layout_alignTop="@+id/switchReceiver" />
 
 </RelativeLayout>

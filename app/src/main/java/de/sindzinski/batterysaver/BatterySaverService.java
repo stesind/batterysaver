@@ -26,7 +26,7 @@ public class BatterySaverService extends Service {
         Log.i(TAG, "BatteryServerService called");
 
         final String CRITICALBATTERYLEVEL = "criticalbatterylevel";
-        float criticalBatteryLevel = (float) intent.getIntExtra(CRITICALBATTERYLEVEL,30);
+        int criticalBatteryLevel = intent.getIntExtra(CRITICALBATTERYLEVEL, 39);
 
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         Intent batteryStatus = this.registerReceiver(null, ifilter);
@@ -45,15 +45,16 @@ public class BatterySaverService extends Service {
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
 
         float batteryPct = level / (float)scale;
-
-        if (batteryPct < criticalBatteryLevel) {
-            Log.i(TAG, "criticalbatterylevel reached");
+        Log.i(TAG, "Batterylevel: " + batteryPct);
+        if (batteryPct < ((float) criticalBatteryLevel/100)) {
+            Log.i(TAG, "criticalbatterylevel reached: " + criticalBatteryLevel);
             turnWifiOff();
         } else if (batteryPct > criticalBatteryLevel+10) {
-            Log.i(TAG, "safebatterylevel reached");
+            Log.i(TAG, "safebatterylevel reached " + criticalBatteryLevel);
             turnWifiOn();
         }
 
+        //stopSelf();
         return Service.START_NOT_STICKY;
     }
 

@@ -19,6 +19,7 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -29,9 +30,9 @@ import java.util.Calendar;
 public class MainActivity extends AppCompatActivity  {
     private static final long REPEAT_TIME = 1000 * 30;
     private static final String TAG = "BatterySaver";
-    private static final int DEFAULTCRITICALBATTERYLEVEL = 30;
+    private static final int DEFAULTCRITICALBATTERYLEVEL = 33;
     final String CRITICALBATTERYLEVEL = "criticalbatterylevel";
-    int criticalBatteryLevel;
+    int criticalBatteryLevel = DEFAULTCRITICALBATTERYLEVEL;
     TextView textViewCriticalBatteryLevel;
     SeekBar seekBar;
 
@@ -61,9 +62,15 @@ public class MainActivity extends AppCompatActivity  {
         boolean usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB;
         boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
 
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+        int batteryPct =(int) (((float)level / (float) scale)*100);
+
         TextView textView = (TextView) findViewById(R.id.textView);
-        textView.setText("Current status:" +
-                "\nisCharging: " + isCharging
+        textView.setText("Current status:"
+                + "\nPercentage: " + (int) batteryPct
+                + "\nisCharging: " + isCharging
                 + " \nisFull: " + isFull
                 + " \nusbCharge: " + usbCharge
                 + " \nacCharge: " + acCharge);
@@ -100,10 +107,11 @@ public class MainActivity extends AppCompatActivity  {
                 }
             }
         });
+
         Switch switchService = (Switch) findViewById(R.id.switchService);
 
         //set the switch button to the actual registration state of broadcast receiver
-        switchService.setChecked(checkReceiver());
+        switchService.setChecked(checkBatterySaverService());
 
         switchService.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -144,6 +152,22 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
+        //buttons
+        Button buttonUpdateService = (Button) findViewById(R.id.buttonUpdateService);
+        buttonUpdateService.setEnabled(checkBatterySaverService());
+        //register the listener for buttons
+        View.OnClickListener clickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                switch(v.getId()) {
+                    case R.id.buttonUpdateService:
+                        updateBatterySaverService();
+                        break;
+                }
+            }
+        };
+
+        buttonUpdateService.setOnClickListener(clickListener);
     }
 
     public boolean checkReceiver() {
@@ -183,38 +207,116 @@ public class MainActivity extends AppCompatActivity  {
     public void startBatterySaverService() {
         // use this to start and trigger a service
 
-        Calendar cal = Calendar.getInstance();
+/*        Intent myIntent = new Intent(context, MyServiceReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context,  0, myIntent, 0);
+
+        AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.add(Calendar.SECOND, 60); // first time
+        long frequency= 60 * 1000; // in ms
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);*/
 
         Intent intent = new Intent(this, BatterySaverService.class);
-        intent.putExtra(CRITICALBATTERYLEVEL, criticalBatteryLevel);
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        intent.putExtra(CRITICALBATTERYLEVEL, (int) criticalBatteryLevel);
+        //PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        //all of pendingintent must be equal, otherwise one will get a new one
+        PendingIntent pendingIntent = PendingIntent.getService(this, 1, intent, 0);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Calendar calendar = Calendar.getInstance();
         // schedule 30 seconds after boot
         //cal.add(Calendar.SECOND, 30);
-        //
         // Fetch every 30 seconds
         // InexactRepeating allows Android to optimize the energy consumption
-        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP,
-                cal.getTimeInMillis(), REPEAT_TIME, pendingIntent);
+        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(), REPEAT_TIME, pendingIntent);
+
+        //set the update button
+        Button buttonUpdateService = (Button) findViewById(R.id.buttonUpdateService);
+        buttonUpdateService.setEnabled(checkBatterySaverService());
+
+        Log.i(TAG, "Started BatteryServerService");
+    }
+
+    public void updateBatterySaverService() {
+        // use this to start and trigger a service
+
+/*        Intent myIntent = new Intent(context, MyServiceReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context,  0, myIntent, 0);
+
+        AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.add(Calendar.SECOND, 60); // first time
+        long frequency= 60 * 1000; // in ms
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);*/
+
+        Intent intent = new Intent(this, BatterySaverService.class);
+        intent.putExtra(CRITICALBATTERYLEVEL, (int) criticalBatteryLevel);
+        //PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        Calendar calendar = Calendar.getInstance();
+        // schedule 30 seconds after boot
+        //cal.add(Calendar.SECOND, 30);
+        // Fetch every 30 seconds
+        // InexactRepeating allows Android to optimize the energy consumption
+        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(), REPEAT_TIME, pendingIntent);
+
+        Log.i(TAG, "Updated BatteryServerService");
+    }
+
+    public boolean checkBatterySaverService() {
+        //checks if service is already existing
+        boolean alarmUp = false;
+
+        Intent intent = new Intent(this, BatterySaverService.class);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 1, intent, PendingIntent.FLAG_NO_CREATE);
+        if (pendingIntent != null) {
+            alarmUp = true;
+        }
+   /*     boolean alarmUp = (PendingIntent.getService(this, 1,
+                new Intent("BatterySaverService.class"),
+                PendingIntent.FLAG_NO_CREATE) != null)*/;
+
+        if (alarmUp)
+        {
+            Log.d("myTag", "Alarm is already active");
+            return true;
+        } else {
+            return false;
+        }
+
     }
 
     public void stopBatterySaverService() {
         final String CRITICALBATTERYLEVEL = "criticalbatterylevel";
 
+/*        myIntent = new Intent(SetActivity.this, AlarmActivity.class);
+        pendingIntent = PendingIntent.getActivity(CellManageAddShowActivity.this,
+                id, myIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        pendingIntent.cancel();
+        alarmManager.cancel(pendingIntent);*/
+
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
         Intent intent = new Intent(this, BatterySaverService.class);
-        intent.putExtra(CRITICALBATTERYLEVEL, 30.0F);
+        //intent.putExtra(CRITICALBATTERYLEVEL, 30.0F);
 /*        intent.putExtra("ALERT_TIME", alert.date);
         intent.putExtra("ID_ALERT", alert.idAlert);
         intent.putExtra("TITLE", alert.title);
         intent.putExtra("GEO_LOC", alert.isGeoLoc);*/
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this,
-                0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-
+        PendingIntent pendingIntent = PendingIntent.getService(this, 1, intent, 0);
+        pendingIntent.cancel();
         alarmManager.cancel(pendingIntent);
         Log.i(TAG,"REMOVED BatteryServerService");
+
+        //set the update button
+        Button buttonUpdateService = (Button) findViewById(R.id.buttonUpdateService);
+        buttonUpdateService.setEnabled(checkBatterySaverService());
     }
 
     public void turnWifiOn() {
