@@ -76,7 +76,6 @@ public class MainActivity extends AppCompatActivity  {
                 + " \nacCharge: " + acCharge);
 
         Switch switchWifi = (Switch) findViewById(R.id.switchWifi);
-        Switch switchReceiver = (Switch) findViewById(R.id.switchReceiver);
 
         ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
@@ -94,8 +93,8 @@ public class MainActivity extends AppCompatActivity  {
         });
 
         //set the switch button to the actual registration state of broadcast receiver
+        Switch switchReceiver = (Switch) findViewById(R.id.switchReceiver);
         switchReceiver.setChecked(checkReceiver());
-
         switchReceiver.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
@@ -170,6 +169,63 @@ public class MainActivity extends AppCompatActivity  {
         buttonUpdateService.setOnClickListener(clickListener);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        //startService(intent);
+        //registerReceiver(broadcastReceiver, new IntentFilter(BroadcastService.BROADCAST_ACTION));
+
+        // Register for the battery changed event
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = this.registerReceiver(null, filter);
+        // Are we charging / charged?
+        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+
+        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING
+                || status == BatteryManager.BATTERY_STATUS_FULL;
+
+        boolean isFull = status == BatteryManager.BATTERY_STATUS_FULL;
+
+        // How are we charging?
+        int chargePlug = batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
+        boolean usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB;
+        boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
+
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+        int batteryPct =(int) (((float)level / (float) scale)*100);
+
+        TextView textView = (TextView) findViewById(R.id.textView);
+        textView.setText("Current status:"
+                + "\nPercentage: " + (int) batteryPct
+                + "\nisCharging: " + isCharging
+                + " \nisFull: " + isFull
+                + " \nusbCharge: " + usbCharge
+                + " \nacCharge: " + acCharge);
+
+        Switch switchWifi = (Switch) findViewById(R.id.switchWifi);
+
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        switchWifi.setChecked(mWifi.isConnected());
+
+        Switch switchReceiver = (Switch) findViewById(R.id.switchReceiver);
+        //set the switch button to the actual registration state of broadcast receiver
+        switchReceiver.setChecked(checkReceiver());
+
+        Switch switchService = (Switch) findViewById(R.id.switchService);
+
+        //set the switch button to the actual registration state of broadcast receiver
+        switchService.setChecked(checkBatterySaverService());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //unregisterReceiver(broadcastReceiver);
+        //stopService(intent);
+    }
     public boolean checkReceiver() {
         ComponentName receiver = new ComponentName(this, BatterySaverReceiver.class);
         PackageManager pm = getPackageManager();
