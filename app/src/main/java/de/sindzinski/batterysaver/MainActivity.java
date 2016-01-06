@@ -1,7 +1,6 @@
 package de.sindzinski.batterysaver;
 
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -11,25 +10,30 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.CompoundButton;
+import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.ToggleButton;
+
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity  {
+    private static final long REPEAT_TIME = 1000 * 30;
+    private static final String TAG = "BatterySaver";
+    private static final int DEFAULTCRITICALBATTERYLEVEL = 30;
+    final String CRITICALBATTERYLEVEL = "criticalbatterylevel";
+    int criticalBatteryLevel;
+    TextView textViewCriticalBatteryLevel;
+    SeekBar seekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,13 +68,28 @@ public class MainActivity extends AppCompatActivity  {
                 + " \nusbCharge: " + usbCharge
                 + " \nacCharge: " + acCharge);
 
-        ToggleButton toggleButton = (ToggleButton) findViewById(R.id.toggleButton);
+        Switch switchWifi = (Switch) findViewById(R.id.switchWifi);
+        Switch switchReceiver = (Switch) findViewById(R.id.switchReceiver);
 
-        //set the toogle button to the actual registration state of broadcast receiver
-        toggleButton.setChecked(checkReceiver());
-        //toggleButton.setChecked(false);
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        switchWifi.setChecked(mWifi.isConnected());
+        switchWifi.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    // The switch is enabled
+                    turnWifiOn();
+                } else {
+                    // The switch is disabled
+                    turnWifiOff();
+                }
+            }
+        });
 
-        toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        //set the switch button to the actual registration state of broadcast receiver
+        switchReceiver.setChecked(checkReceiver());
+
+        switchReceiver.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     // The toggle is enabled
@@ -81,10 +100,54 @@ public class MainActivity extends AppCompatActivity  {
                 }
             }
         });
+        Switch switchService = (Switch) findViewById(R.id.switchService);
+
+        //set the switch button to the actual registration state of broadcast receiver
+        switchService.setChecked(checkReceiver());
+
+        switchService.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    // The toggle is enabled
+                    startBatterySaverService();
+                } else {
+                    // The toggle is disabled
+                    stopBatterySaverService();
+                }
+            }
+        });
+
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        textViewCriticalBatteryLevel = (TextView) findViewById(R.id.textViewCriticalBatteryLevel);
+
+        seekBar.setMax(100);
+        seekBar.setProgress(DEFAULTCRITICALBATTERYLEVEL);
+        textViewCriticalBatteryLevel.setText(String.valueOf(DEFAULTCRITICALBATTERYLEVEL));
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                // TODO Auto-generated method stub
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // TODO Auto-generated method stub
+            }
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                // TODO Auto-generated method stub
+                criticalBatteryLevel = progress;
+                textViewCriticalBatteryLevel.setText(String.valueOf(criticalBatteryLevel));
+            }
+        });
+
     }
 
     public boolean checkReceiver() {
-        ComponentName receiver = new ComponentName(this, BatteryReceiver.class);
+        ComponentName receiver = new ComponentName(this, BatterySaverReceiver.class);
         PackageManager pm = getPackageManager();
         int componentEnabledSetting = pm.getComponentEnabledSetting(receiver);
         if (componentEnabledSetting == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
@@ -95,31 +158,68 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     public void registerReceiver() {
-        ComponentName receiver = new ComponentName(this, BatteryReceiver.class);
+        ComponentName receiver = new ComponentName(this, BatterySaverReceiver.class);
         PackageManager pm = getPackageManager();
 
         pm.setComponentEnabledSetting(receiver,
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 //COMPONENT_ENABLED_STATE_DEFAULT	Sets the state to the manifest file value
                 PackageManager.DONT_KILL_APP);
-        String message = "BatteryReceiver registered";
+        String message = "BatterySaverReceiver registered";
         setMessage(message);
     }
 
     public void unRegisterReceiver() {
-        ComponentName receiver = new ComponentName(this, BatteryReceiver.class);
+        ComponentName receiver = new ComponentName(this, BatterySaverReceiver.class);
         PackageManager pm = getPackageManager();
 
         pm.setComponentEnabledSetting(receiver,
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                 PackageManager.DONT_KILL_APP);
-        String message = "BatteryReceiver unregistered";
+        String message = "BatterySaverReceiver unregistered";
         setMessage(message);
     }
 
-    public void wifiOn(View view) {
+    public void startBatterySaverService() {
+        // use this to start and trigger a service
+
+        Calendar cal = Calendar.getInstance();
+
+        Intent intent = new Intent(this, BatterySaverService.class);
+        intent.putExtra(CRITICALBATTERYLEVEL, criticalBatteryLevel);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
+
+        AlarmManager alarm = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        // schedule 30 seconds after boot
+        //cal.add(Calendar.SECOND, 30);
+        //
+        // Fetch every 30 seconds
+        // InexactRepeating allows Android to optimize the energy consumption
+        alarm.setInexactRepeating(AlarmManager.RTC_WAKEUP,
+                cal.getTimeInMillis(), REPEAT_TIME, pendingIntent);
+    }
+
+    public void stopBatterySaverService() {
+        final String CRITICALBATTERYLEVEL = "criticalbatterylevel";
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        Intent intent = new Intent(this, BatterySaverService.class);
+        intent.putExtra(CRITICALBATTERYLEVEL, 30.0F);
+/*        intent.putExtra("ALERT_TIME", alert.date);
+        intent.putExtra("ID_ALERT", alert.idAlert);
+        intent.putExtra("TITLE", alert.title);
+        intent.putExtra("GEO_LOC", alert.isGeoLoc);*/
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this,
+                0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+        alarmManager.cancel(pendingIntent);
+        Log.i(TAG,"REMOVED BatteryServerService");
+    }
+
+    public void turnWifiOn() {
         WifiManager wifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
-        Log.i("BatteryReceiver", "BatteryLow");
+        Log.i("BatterySaverReceiver", "BatteryLow");
         if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
         }
@@ -127,9 +227,9 @@ public class MainActivity extends AppCompatActivity  {
         setMessage(message);
     }
 
-    public void wifiOff(View view) {
+    public void turnWifiOff() {
         WifiManager wifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
-        Log.i("BatteryReceiver", "Power Connected");
+        Log.i("BatterySaverReceiver", "Power Connected");
         if (wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(false);
         }

@@ -13,20 +13,18 @@ import android.R;
 /**
  * Created by steffen on 03.01.16.
  */
-public class BatteryReceiver extends BroadcastReceiver {
+public class BatterySaverReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-
-        // assumes WordService is a registered service
-        //Intent intent = new Intent(context, WordService.class);
-        //context.startService(intent);
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         String message =null;
         String action = intent.getAction();
-        
+
         switch (action) {
+            case "android.intent.ACTION_BATTERY_CHANGED":
+                Log.i("BatterySaverReceiver", "BatteryChanging");
             case "android.intent.action.BATTERY_LOW":
-                Log.i("BatteryReceiver", "BatteryLow");
+                Log.i("BatterySaverReceiver", "BatteryLow");
                 if (wifiManager.isWifiEnabled()) {
                     wifiManager.setWifiEnabled(false);
 
@@ -53,11 +51,11 @@ public class BatteryReceiver extends BroadcastReceiver {
 
                 break;
             case "android.intent.action.BATTERY_OKAY":
-                Log.i("BatteryReceiver", "BatteryOK");
+                Log.i("BatterySaverReceiver", "BatteryOK");
             case "android.intent.action.ACTION_DOCK_EVENT":
-                Log.i("BatteryReceiver", "Dock connected");
+                Log.i("BatterySaverReceiver", "Dock connected");
             case "android.intent.action.ACTION_POWER_CONNECTED":
-                Log.i("BatteryReceiver", "Power Connected");
+                Log.i("BatterySaverReceiver", "Power Connected");
                 if (!wifiManager.isWifiEnabled()) {
                     wifiManager.setWifiEnabled(true);
                     message = "Power Connected - Wifi turned on";

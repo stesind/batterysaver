@@ -1,7 +1,10 @@
 <resources>
-    <string name="app_name">BatterySafer</string>
+    <string name="app_name">BatterySaver</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_settings">Settings</string>
     <string name="pref_saveBattery">Save Battery</string>
     <string name="pref_saveBattery_sum">Save Battery</string>
+    <string name="pref_BatterySaver">Save Battery</string>
+    <string name="pref_BatterySaver_sum">Save Battery</string>
+    <string name="service_name">Battery Saver</string>
 </resources>
