@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity  {
         seekBarCriticalBatteryLevel = (SeekBar) findViewById(R.id.seekBarCriticalBatteryLevel);
         textViewCriticalBatteryLevel = (TextView) findViewById(R.id.textViewCriticalBatteryLevel);
 
-        seekBarCriticalBatteryLevel.setMax(100);
+        seekBarCriticalBatteryLevel.setMax(95);
         seekBarCriticalBatteryLevel.setProgress(criticalBatteryLevel);
         textViewCriticalBatteryLevel.setText("Critical Battery Level (%): " + String.valueOf(criticalBatteryLevel));
 
@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity  {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 // TODO Auto-generated method stub
-                criticalBatteryLevel = progress;
+                criticalBatteryLevel = progress + 5;
                 textViewCriticalBatteryLevel.setText("Critical Battery Level (%): " +String.valueOf(criticalBatteryLevel));
             }
         });
@@ -131,7 +131,8 @@ public class MainActivity extends AppCompatActivity  {
         seekBarPollingInterval = (SeekBar) findViewById(R.id.seekBarPollingInterval);
         textViewPollingInterval = (TextView) findViewById(R.id.textViewPollingInterval);
 
-        seekBarPollingInterval.setMax(60);
+
+        seekBarPollingInterval.setMax(59);
         seekBarPollingInterval.setProgress(pollingInterval);
         textViewPollingInterval.setText("Polling Interval (min): " + String.valueOf(pollingInterval));
 
@@ -150,7 +151,7 @@ public class MainActivity extends AppCompatActivity  {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 // TODO Auto-generated method stub
-                pollingInterval = progress;
+                pollingInterval = progress + 1 ;
                 textViewPollingInterval.setText("Polling Interval (min): " + String.valueOf(pollingInterval));
             }
         });
