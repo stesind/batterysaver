@@ -28,52 +28,29 @@ import android.widget.TextView;
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity  {
-    private static final long REPEAT_TIME = 1000 * 30;
+
     private static final String TAG = "BatterySaver";
-    private static final int DEFAULTCRITICALBATTERYLEVEL = 33;
+    private static final int DEFAULTCRITICALBATTERYLEVEL = 20;
+    private static final int DEFAULTPOLLINGINTERVAL = 30;
     final String CRITICALBATTERYLEVEL = "criticalbatterylevel";
+    final String POLLINGINTERVAL = "pollinginterval";
     int criticalBatteryLevel = DEFAULTCRITICALBATTERYLEVEL;
+    int pollingInterval = DEFAULTPOLLINGINTERVAL;
     TextView textViewCriticalBatteryLevel;
-    SeekBar seekBar;
+    SeekBar seekBarCriticalBatteryLevel;
+    TextView textViewPollingInterval;
+    SeekBar seekBarPollingInterval;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // read user preferences
         SharedPreferences sharedPrefs;
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-        // Register for the battery changed event
-        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        // Intent is sticky so using null as receiver works fine
-        // return value contains the status
-        Intent batteryStatus = this.registerReceiver(null, filter);
-        // Are we charging / charged?
-        int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-
-        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING
-                || status == BatteryManager.BATTERY_STATUS_FULL;
-
-        boolean isFull = status == BatteryManager.BATTERY_STATUS_FULL;
-
-        // How are we charging?
-        int chargePlug = batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
-        boolean usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB;
-        boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
-
-        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-
-        int batteryPct =(int) (((float)level / (float) scale)*100);
-
-        TextView textView = (TextView) findViewById(R.id.textView);
-        textView.setText("Current status:"
-                + "\nPercentage: " + (int) batteryPct
-                + "\nisCharging: " + isCharging
-                + " \nisFull: " + isFull
-                + " \nusbCharge: " + usbCharge
-                + " \nacCharge: " + acCharge);
+        criticalBatteryLevel = sharedPrefs.getInt(CRITICALBATTERYLEVEL, DEFAULTCRITICALBATTERYLEVEL);
+        pollingInterval = sharedPrefs.getInt(POLLINGINTERVAL, DEFAULTPOLLINGINTERVAL);
 
         Switch switchWifi = (Switch) findViewById(R.id.switchWifi);
 
@@ -124,14 +101,14 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
-        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        seekBarCriticalBatteryLevel = (SeekBar) findViewById(R.id.seekBarCriticalBatteryLevel);
         textViewCriticalBatteryLevel = (TextView) findViewById(R.id.textViewCriticalBatteryLevel);
 
-        seekBar.setMax(100);
-        seekBar.setProgress(DEFAULTCRITICALBATTERYLEVEL);
-        textViewCriticalBatteryLevel.setText(String.valueOf(DEFAULTCRITICALBATTERYLEVEL));
+        seekBarCriticalBatteryLevel.setMax(100);
+        seekBarCriticalBatteryLevel.setProgress(criticalBatteryLevel);
+        textViewCriticalBatteryLevel.setText("Critical Battery Level (%): " + String.valueOf(criticalBatteryLevel));
 
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        seekBarCriticalBatteryLevel.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
@@ -147,7 +124,34 @@ public class MainActivity extends AppCompatActivity  {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 // TODO Auto-generated method stub
                 criticalBatteryLevel = progress;
-                textViewCriticalBatteryLevel.setText(String.valueOf(criticalBatteryLevel));
+                textViewCriticalBatteryLevel.setText("Critical Battery Level (%): " +String.valueOf(criticalBatteryLevel));
+            }
+        });
+
+        seekBarPollingInterval = (SeekBar) findViewById(R.id.seekBarPollingInterval);
+        textViewPollingInterval = (TextView) findViewById(R.id.textViewPollingInterval);
+
+        seekBarPollingInterval.setMax(60);
+        seekBarPollingInterval.setProgress(pollingInterval);
+        textViewPollingInterval.setText("Polling Interval (min): " + String.valueOf(pollingInterval));
+
+        seekBarPollingInterval.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                // TODO Auto-generated method stub
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // TODO Auto-generated method stub
+            }
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                // TODO Auto-generated method stub
+                pollingInterval = progress;
+                textViewPollingInterval.setText("Polling Interval (min): " + String.valueOf(pollingInterval));
             }
         });
 
@@ -175,6 +179,7 @@ public class MainActivity extends AppCompatActivity  {
         //startService(intent);
         //registerReceiver(broadcastReceiver, new IntentFilter(BroadcastService.BROADCAST_ACTION));
 
+        // Update UI
         // Register for the battery changed event
         IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         Intent batteryStatus = this.registerReceiver(null, filter);
@@ -196,9 +201,9 @@ public class MainActivity extends AppCompatActivity  {
 
         int batteryPct =(int) (((float)level / (float) scale)*100);
 
-        TextView textView = (TextView) findViewById(R.id.textView);
-        textView.setText("Current status:"
-                + "\nPercentage: " + (int) batteryPct
+        TextView textViewStatus = (TextView) findViewById(R.id.textViewStatus);
+        textViewStatus.setText("Current status:"
+                + "\nPercentage: " + batteryPct
                 + "\nisCharging: " + isCharging
                 + " \nisFull: " + isFull
                 + " \nusbCharge: " + usbCharge
@@ -225,7 +230,15 @@ public class MainActivity extends AppCompatActivity  {
         super.onPause();
         //unregisterReceiver(broadcastReceiver);
         //stopService(intent);
+
+        //safe the user preferences
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt(CRITICALBATTERYLEVEL,criticalBatteryLevel);
+        editor.putInt(POLLINGINTERVAL,pollingInterval);
+        editor.apply();
     }
+
     public boolean checkReceiver() {
         ComponentName receiver = new ComponentName(this, BatterySaverReceiver.class);
         PackageManager pm = getPackageManager();
@@ -285,8 +298,9 @@ public class MainActivity extends AppCompatActivity  {
         //cal.add(Calendar.SECOND, 30);
         // Fetch every 30 seconds
         // InexactRepeating allows Android to optimize the energy consumption
+        long repeatTime = pollingInterval * 1000 * 60;
         alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(), REPEAT_TIME, pendingIntent);
+                calendar.getTimeInMillis(), repeatTime, pendingIntent);
 
         //set the update button
         Button buttonUpdateService = (Button) findViewById(R.id.buttonUpdateService);
@@ -320,9 +334,10 @@ public class MainActivity extends AppCompatActivity  {
         // schedule 30 seconds after boot
         //cal.add(Calendar.SECOND, 30);
         // Fetch every 30 seconds
+        long repeatTime = pollingInterval * 1000 * 60;
         // InexactRepeating allows Android to optimize the energy consumption
         alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(), REPEAT_TIME, pendingIntent);
+                calendar.getTimeInMillis(), repeatTime, pendingIntent);
 
         Log.i(TAG, "Updated BatteryServerService");
         String message = "BatterySaverService updated";

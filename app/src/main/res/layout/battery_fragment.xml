@@ -22,40 +22,49 @@
     <Switch
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Wifi Receiver On/Off"
+        android:text="Battery Saver Broadcast Receiver"
         android:id="@+id/switchReceiver"
         android:layout_below="@+id/switchWifi"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="35dp" />
     <Switch
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Battery Saver Service"
         android:id="@+id/switchService"
         android:layout_below="@+id/switchReceiver"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="34dp" />
 
     <SeekBar
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/seekBar"
-        android:layout_below="@+id/switchService"
-        android:layout_alignParentStart="true"
-        android:layout_alignEnd="@+id/switchReceiver" />
+        android:id="@+id/seekBarCriticalBatteryLevel"
+        android:layout_below="@+id/textViewCriticalBatteryLevel"
+        android:layout_alignParentStart="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="New Text"
         android:id="@+id/textViewCriticalBatteryLevel"
-        android:layout_above="@+id/textView"
-        android:layout_toEndOf="@+id/seekBar" />
+        android:layout_below="@+id/switchService"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="33dp" />
+
+    <SeekBar
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/seekBarPollingInterval"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Status"
-        android:id="@+id/textView"
-        android:layout_below="@+id/seekBar"
+        android:text="New Text"
+        android:id="@+id/textViewPollingInterval"
+        android:layout_above="@+id/seekBarPollingInterval"
         android:layout_alignParentStart="true" />
 
     <Button
@@ -64,9 +73,16 @@
         android:layout_height="wrap_content"
         android:text="Update Service"
         android:id="@+id/buttonUpdateService"
-        android:layout_toEndOf="@+id/switchService"
-        android:layout_marginStart="32dp"
-        android:layout_alignBottom="@+id/switchService"
-        android:layout_alignTop="@+id/switchReceiver" />
+        android:layout_marginTop="86dp"
+        android:layout_below="@+id/seekBarCriticalBatteryLevel" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="New Text"
+        android:id="@+id/textViewStatus"
+        android:layout_below="@+id/buttonUpdateService"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="30dp" />
 
 </RelativeLayout>
