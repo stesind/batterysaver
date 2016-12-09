@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -11,6 +12,8 @@ import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 /**
@@ -18,6 +21,8 @@ import android.util.Log;
  */
 public class BatterySaverService extends Service {
     private static final String TAG = "BatterySaverService";
+    int mNotificationId;
+    final static String GROUP_KEY_BATTERY_SAVER = "group_key_battery_saver";
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -48,9 +53,11 @@ public class BatterySaverService extends Service {
         Log.i(TAG, "Batterylevel: " + batteryPct);
         if (batteryPct < ((float) criticalBatteryLevel/100)) {
             Log.i(TAG, "criticalbatterylevel reached: " + criticalBatteryLevel);
+            setMessage("criticalbatterylevel reached: " + criticalBatteryLevel);
             turnWifiOff();
         } else if (batteryPct > criticalBatteryLevel+10) {
             Log.i(TAG, "safebatterylevel reached " + criticalBatteryLevel);
+            setMessage("safebatterylevel reached: " + criticalBatteryLevel);
             turnWifiOn();
         }
 
@@ -95,24 +102,57 @@ public class BatterySaverService extends Service {
     }
 
     public void setMessage(String message) {
-        Intent i = new Intent(this, MainActivity.class);
-        // use System.currentTimeMillis() to have a unique ID for the pending intent
-        PendingIntent pIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), i, 0);
+//        Intent i = new Intent(this, MainActivity.class);
+//        // use System.currentTimeMillis() to have a unique ID for the pending intent
+//        PendingIntent pIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), i, 0);
+//
+//        // build notification
+//        // the addAction re-use the same intent to keep the example short
+//        Notification n  = new Notification.Builder(this)
+//                .setContentTitle("Battery Saver")
+//                .setContentText(message)
+//                .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
+//                .setContentIntent(pIntent)
+//                .setAutoCancel(true)
+//                .build();
+//
+//        NotificationManager notificationManager =
+//                (NotificationManager) this.getSystemService(this.NOTIFICATION_SERVICE);
+//
+//        notificationManager.notify(0, n);
 
-        // build notification
-        // the addAction re-use the same intent to keep the example short
-        Notification n  = new Notification.Builder(this)
-                .setContentTitle("Battery Saver")
-                .setContentText(message)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
-                .setContentIntent(pIntent)
-                .setAutoCancel(true)
-                .build();
+        NotificationCompat.Builder mBuilder =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
+                        .setContentTitle("Battery Saver Service")
+                        .setAutoCancel(false)
+                        .setGroup(GROUP_KEY_BATTERY_SAVER)
+                        .setGroupSummary(false)
+                        .setContentText(message);
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(this, MainActivity.class);
 
-        NotificationManager notificationManager =
-                (NotificationManager) this.getSystemService(this.NOTIFICATION_SERVICE);
-
-        notificationManager.notify(0, n);
+        // The stack builder object will contain an artificial back stack for the
+        // started Activity.
+        // This ensures that navigating backward from the Activity leads out of
+        // your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        // Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(MainActivity.class);
+        // Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        // mId allows you to update the notification later on.
+        // using mNotificationId changes the old notification instead of creating a new one
+        //mNotificationManager.notify(mNotificationId, mBuilder.build());
+        mNotificationManager.notify(mNotificationId, mBuilder.build());
     }
 }
 
