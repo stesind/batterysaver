@@ -103,13 +103,10 @@ public class MainActivity extends AppCompatActivity  {
 
         seekBarCriticalBatteryLevel = (SeekBar) findViewById(R.id.seekBarCriticalBatteryLevel);
         textViewCriticalBatteryLevel = (TextView) findViewById(R.id.textViewCriticalBatteryLevel);
-
         seekBarCriticalBatteryLevel.setMax(95);
         seekBarCriticalBatteryLevel.setProgress(criticalBatteryLevel);
         textViewCriticalBatteryLevel.setText("Critical Battery Level (%): " + String.valueOf(criticalBatteryLevel));
-
         seekBarCriticalBatteryLevel.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 // TODO Auto-generated method stub
@@ -130,14 +127,10 @@ public class MainActivity extends AppCompatActivity  {
 
         seekBarPollingInterval = (SeekBar) findViewById(R.id.seekBarPollingInterval);
         textViewPollingInterval = (TextView) findViewById(R.id.textViewPollingInterval);
-
-
         seekBarPollingInterval.setMax(59);
         seekBarPollingInterval.setProgress(pollingInterval);
         textViewPollingInterval.setText("Polling Interval (min): " + String.valueOf(pollingInterval));
-
         seekBarPollingInterval.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 // TODO Auto-generated method stub
