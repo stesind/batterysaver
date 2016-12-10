@@ -34,8 +34,12 @@ public class MainActivity extends AppCompatActivity  {
     private static final String TAG = "BatterySaver";
     private static final int DEFAULTCRITICALBATTERYLEVEL = 20;
     private static final int DEFAULTPOLLINGINTERVAL = 30;
+    final String ENABLESERVICE = "enableService";
+    final String ENABLEBROADCAST = "enableBroadcast";
     final String CRITICALBATTERYLEVEL = "criticalbatterylevel";
     final String POLLINGINTERVAL = "pollinginterval";
+    boolean enableService = false;
+    boolean enableBroadcast = false;
     int criticalBatteryLevel = DEFAULTCRITICALBATTERYLEVEL;
     int pollingInterval = DEFAULTPOLLINGINTERVAL;
     int mNotificationId = 0;
@@ -55,6 +59,23 @@ public class MainActivity extends AppCompatActivity  {
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         criticalBatteryLevel = sharedPrefs.getInt(CRITICALBATTERYLEVEL, DEFAULTCRITICALBATTERYLEVEL);
         pollingInterval = sharedPrefs.getInt(POLLINGINTERVAL, DEFAULTPOLLINGINTERVAL);
+        enableBroadcast = sharedPrefs.getBoolean(ENABLEBROADCAST, false);
+        enableService = sharedPrefs.getBoolean(ENABLESERVICE, false);
+
+        if (checkReceiver()) {
+            if (!enableBroadcast) {
+                unRegisterReceiver();
+            }
+        } else if (enableBroadcast) {
+                registerReceiver();
+            }
+        if (checkBatterySaverService()) {
+            if (!enableService) {
+                stopBatterySaverService();
+            }
+        } else if (enableService) {
+            startBatterySaverService();
+        }
 
         Switch switchWifi = (Switch) findViewById(R.id.switchWifi);
 
@@ -75,7 +96,7 @@ public class MainActivity extends AppCompatActivity  {
 
         //set the switch button to the actual registration state of broadcast receiver
         Switch switchReceiver = (Switch) findViewById(R.id.switchReceiver);
-        switchReceiver.setChecked(checkReceiver());
+        switchReceiver.setChecked(enableBroadcast);
         switchReceiver.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
@@ -91,7 +112,7 @@ public class MainActivity extends AppCompatActivity  {
         Switch switchService = (Switch) findViewById(R.id.switchService);
 
         //set the switch button to the actual registration state of broadcast receiver
-        switchService.setChecked(checkBatterySaverService());
+        switchService.setChecked(enableService);
 
         switchService.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -232,8 +253,10 @@ public class MainActivity extends AppCompatActivity  {
         //safe the user preferences
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt(CRITICALBATTERYLEVEL,criticalBatteryLevel);
-        editor.putInt(POLLINGINTERVAL,pollingInterval);
+        editor.putInt(CRITICALBATTERYLEVEL, criticalBatteryLevel);
+        editor.putInt(POLLINGINTERVAL, pollingInterval);
+        editor.putBoolean(ENABLESERVICE, enableService);
+        editor.putBoolean(ENABLEBROADCAST, enableBroadcast);
         editor.apply();
     }
 

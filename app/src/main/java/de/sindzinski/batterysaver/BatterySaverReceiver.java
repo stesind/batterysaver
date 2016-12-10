@@ -6,14 +6,17 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.R;
 /**
  * Created by steffen on 03.01.16.
  */
 public class BatterySaverReceiver extends BroadcastReceiver {
+
     @Override
     public void onReceive(Context context, Intent intent) {
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
@@ -78,6 +81,10 @@ public class BatterySaverReceiver extends BroadcastReceiver {
 
                     notificationManager.notify(0, n);
                 }
+                break;
+            case "Intent.ACTION_BOOT_COMPLETED":
+                Log.i("BatterySaverReceiver", "Device booted - install service");
+
                 break;
         }
 
