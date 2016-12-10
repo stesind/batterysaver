@@ -16,9 +16,8 @@ import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v4.app.NotificationCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -29,7 +28,7 @@ import android.widget.TextView;
 
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity  {
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "BatterySaver";
     private static final int DEFAULTCRITICALBATTERYLEVEL = 20;
@@ -67,8 +66,8 @@ public class MainActivity extends AppCompatActivity  {
                 unRegisterReceiver();
             }
         } else if (enableBroadcast) {
-                registerReceiver();
-            }
+            registerReceiver();
+        }
         if (checkBatterySaverService()) {
             if (!enableService) {
                 stopBatterySaverService();
@@ -146,7 +145,7 @@ public class MainActivity extends AppCompatActivity  {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 // TODO Auto-generated method stub
                 criticalBatteryLevel = progress + 5;
-                textViewCriticalBatteryLevel.setText("Critical Battery Level (%): " +String.valueOf(criticalBatteryLevel));
+                textViewCriticalBatteryLevel.setText("Critical Battery Level (%): " + String.valueOf(criticalBatteryLevel));
             }
         });
 
@@ -169,7 +168,7 @@ public class MainActivity extends AppCompatActivity  {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 // TODO Auto-generated method stub
-                pollingInterval = progress + 1 ;
+                pollingInterval = progress + 1;
                 textViewPollingInterval.setText("Polling Interval (min): " + String.valueOf(pollingInterval));
             }
         });
@@ -181,7 +180,7 @@ public class MainActivity extends AppCompatActivity  {
         View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                switch(v.getId()) {
+                switch (v.getId()) {
                     case R.id.buttonUpdateService:
                         updateBatterySaverService();
                         break;
@@ -217,48 +216,75 @@ public class MainActivity extends AppCompatActivity  {
 
         int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
         int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        Log.d(BatteryManager.EXTRA_HEALTH, TAG);
 
-        int batteryPct =(int) (((float)level / (float) scale)*100);
+        int batteryPct = (int) (((float) level / (float) scale) * 100);
+        String health = "";
+        switch (batteryStatus.getIntExtra(BatteryManager.EXTRA_HEALTH, 0)) {
+            case BatteryManager.BATTERY_HEALTH_COLD:
+                health = "COLD";
+                break;
+            case BatteryManager.BATTERY_HEALTH_DEAD:
+                health = "DEAD";
+                break;
+            case BatteryManager.BATTERY_HEALTH_GOOD:
+                health = "GOOD";
+                break;
+            case BatteryManager.BATTERY_HEALTH_OVERHEAT:
+                health = "OVER HEAT";
+                break;
+            case BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE:
+                health = "OVER VOLTAGE";
+                break;
+            case BatteryManager.BATTERY_HEALTH_UNKNOWN:
+                health = "UNKNOWN";
+                break;
+            case BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE:
+                health = "UNSPECIFIED FAILURE";
+            default:
+                health ="";
+        }
+                TextView textViewStatus = (TextView) findViewById(R.id.textViewStatus);
+                textViewStatus.setText("Current status:"
+                        + "\nPercentage: " + batteryPct
+                        + "\nisCharging: " + isCharging
+                        + "\nisFull: " + isFull
+                        + "\nusbCharge: " + usbCharge
+                        + "\nusbCharge: " + usbCharge
+                        + "\nacCharge: " + acCharge
+                        + "\nhealth: " + health);
 
-        TextView textViewStatus = (TextView) findViewById(R.id.textViewStatus);
-        textViewStatus.setText("Current status:"
-                + "\nPercentage: " + batteryPct
-                + "\nisCharging: " + isCharging
-                + " \nisFull: " + isFull
-                + " \nusbCharge: " + usbCharge
-                + " \nacCharge: " + acCharge);
+                Switch switchWifi = (Switch) findViewById(R.id.switchWifi);
 
-        Switch switchWifi = (Switch) findViewById(R.id.switchWifi);
+                ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                switchWifi.setChecked(mWifi.isConnected());
 
-        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        switchWifi.setChecked(mWifi.isConnected());
+                Switch switchReceiver = (Switch) findViewById(R.id.switchReceiver);
+                //set the switch button to the actual registration state of broadcast receiver
+                switchReceiver.setChecked(checkReceiver());
 
-        Switch switchReceiver = (Switch) findViewById(R.id.switchReceiver);
-        //set the switch button to the actual registration state of broadcast receiver
-        switchReceiver.setChecked(checkReceiver());
+                Switch switchService = (Switch) findViewById(R.id.switchService);
 
-        Switch switchService = (Switch) findViewById(R.id.switchService);
+                //set the switch button to the actual registration state of broadcast receiver
+                switchService.setChecked(checkBatterySaverService());
+        }
 
-        //set the switch button to the actual registration state of broadcast receiver
-        switchService.setChecked(checkBatterySaverService());
-    }
+        @Override
+        public void onPause () {
+            super.onPause();
+            //unregisterReceiver(broadcastReceiver);
+            //stopService(intent);
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        //unregisterReceiver(broadcastReceiver);
-        //stopService(intent);
-
-        //safe the user preferences
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putInt(CRITICALBATTERYLEVEL, criticalBatteryLevel);
-        editor.putInt(POLLINGINTERVAL, pollingInterval);
-        editor.putBoolean(ENABLESERVICE, enableService);
-        editor.putBoolean(ENABLEBROADCAST, enableBroadcast);
-        editor.apply();
-    }
+            //safe the user preferences
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putInt(CRITICALBATTERYLEVEL, criticalBatteryLevel);
+            editor.putInt(POLLINGINTERVAL, pollingInterval);
+            editor.putBoolean(ENABLESERVICE, enableService);
+            editor.putBoolean(ENABLEBROADCAST, enableBroadcast);
+            editor.apply();
+        }
 
     public boolean checkReceiver() {
         ComponentName receiver = new ComponentName(this, BatterySaverReceiver.class);
@@ -376,10 +402,10 @@ public class MainActivity extends AppCompatActivity  {
         }
    /*     boolean alarmUp = (PendingIntent.getService(this, 1,
                 new Intent("BatterySaverService.class"),
-                PendingIntent.FLAG_NO_CREATE) != null)*/;
+                PendingIntent.FLAG_NO_CREATE) != null)*/
+        ;
 
-        if (alarmUp)
-        {
+        if (alarmUp) {
             Log.d("myTag", "Alarm is already active");
             String message = "BatterySaverService already up";
             setNotification(message);
@@ -410,7 +436,7 @@ public class MainActivity extends AppCompatActivity  {
         PendingIntent pendingIntent = PendingIntent.getService(this, 1, intent, 0);
         pendingIntent.cancel();
         alarmManager.cancel(pendingIntent);
-        Log.i(TAG,"REMOVED BatteryServerService");
+        Log.i(TAG, "REMOVED BatteryServerService");
 
         //set the update button
         Button buttonUpdateService = (Button) findViewById(R.id.buttonUpdateService);
