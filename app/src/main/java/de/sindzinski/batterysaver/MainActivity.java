@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     SeekBar seekBarCriticalBatteryLevel;
     TextView textViewPollingInterval;
     SeekBar seekBarPollingInterval;
+    Button buttonUpdateService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,9 +101,11 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     // The toggle is enabled
+                    enableBroadcast = true;
                     registerReceiver();
                 } else {
                     // The toggle is disabled
+                    enableBroadcast = false;
                     unRegisterReceiver();
                 }
             }
@@ -117,9 +120,11 @@ public class MainActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     // The toggle is enabled
+                    enableService = true;
                     startBatterySaverService();
                 } else {
                     // The toggle is disabled
+                    enableService = false;
                     stopBatterySaverService();
                 }
             }
@@ -146,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
                 // TODO Auto-generated method stub
                 criticalBatteryLevel = progress + 5;
                 textViewCriticalBatteryLevel.setText("Critical Battery Level (%): " + String.valueOf(criticalBatteryLevel));
+                buttonUpdateService.setEnabled(true);
             }
         });
 
@@ -170,12 +176,13 @@ public class MainActivity extends AppCompatActivity {
                 // TODO Auto-generated method stub
                 pollingInterval = progress + 1;
                 textViewPollingInterval.setText("Polling Interval (min): " + String.valueOf(pollingInterval));
+                buttonUpdateService.setEnabled(true);
             }
         });
 
         //buttons
-        Button buttonUpdateService = (Button) findViewById(R.id.buttonUpdateService);
-        buttonUpdateService.setEnabled(checkBatterySaverService());
+        buttonUpdateService = (Button) findViewById(R.id.buttonUpdateService);
+        buttonUpdateService.setEnabled(false);
         //register the listener for buttons
         View.OnClickListener clickListener = new View.OnClickListener() {
             @Override
@@ -183,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
                 switch (v.getId()) {
                     case R.id.buttonUpdateService:
                         updateBatterySaverService();
+                        buttonUpdateService.setEnabled(false);
                         break;
                 }
             }
@@ -348,10 +356,6 @@ public class MainActivity extends AppCompatActivity {
         long repeatTime = pollingInterval * 1000 * 60;
         alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(), repeatTime, pendingIntent);
-
-        //set the update button
-        Button buttonUpdateService = (Button) findViewById(R.id.buttonUpdateService);
-        buttonUpdateService.setEnabled(checkBatterySaverService());
 
         Log.i(TAG, "Started BatteryServerService");
         String message = "BatterySaverService started";
